@@ -35,6 +35,10 @@ make_dist("beta", mean = 0.4, median = 0.35)
 make_dist("exponential", mean = 3)
 make_dist("gamma", mean = 5, cv = 0.5)
 
+# Check if a distribution can match the given constraints
+dist_exists("beta", mean = 0.5, var = 0.1)       # TRUE
+dist_exists("exponential", mean = 2.5, var = 1.5) # FALSE (variance must equal mean^2)
+
 # Discovery: which distributions fit these constraints?
 available_distributions(mean = 5, var = 3)
 ```
