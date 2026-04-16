@@ -1,0 +1,4 @@
+export(make_dist)
+export(dist_exists)
+export(available_distributions)
+S3method(print, distsfactory_dist)

@@ -6,12 +6,12 @@ Part of the DistributionsFactories family (alongside [DistributionsFactories.jl]
 
 ## Design
 
-- **Zero heavy dependencies** — works with base R's built-in distribution functions (`dnorm`, `pgamma`, `qbeta`, etc.)
+- **Zero heavy dependencies** — works with base R's built-in distribution functions (`dgamma`, `pnorm`, `qbeta`, etc.)
 - Specify what you know (mean, variance, quantiles, mode) and get back a distribution object
 - The returned object wraps base R's `d/p/q/r` functions with parameters baked in
 - Raw parameters are always accessible via `$params`
 
-## Planned interface
+## Quick start
 
 ```r
 library(distsfactory)
@@ -21,31 +21,76 @@ d <- make_dist("gamma", mean = 5, var = 3)
 
 # Use the built-in d/p/q/r methods (mirrors base R convention)
 d$d(2)          # density:  dgamma(2, shape=..., rate=...)
-d$p(0.95)       # CDF:      pgamma(0.95, shape=..., rate=...)
+d$p(5)          # CDF:      pgamma(5, shape=..., rate=...)
 d$q(0.5)        # quantile: qgamma(0.5, shape=..., rate=...)
 d$r(100)        # random:   rgamma(100, shape=..., rate=...)
 
 # Access raw parameters for use with base R directly
 d$params        # list(shape = 8.33, rate = 1.67)
+```
 
-# Various specification styles
-make_dist("normal", mean = 10, std = 2)
-make_dist("normal", q1 = 10, q3 = 30)
-make_dist("beta", mean = 0.4, median = 0.35)
-make_dist("exponential", mean = 3)
-make_dist("gamma", mean = 5, cv = 0.5)
+## Supported distributions
 
-# Check if a distribution can match the given constraints
-dist_exists("beta", mean = 0.5, var = 0.1)       # TRUE
-dist_exists("exponential", mean = 2.5, var = 1.5) # FALSE (variance must equal mean^2)
+| Distribution | Supported specifications |
+|---|---|
+| **Gamma** | mean+var, mean+mode, mode+var, mode+quantile, mode+iqr, two quantiles, mean+quantile |
+| **Exponential** | mean, mean+var, var, single quantile |
+| **Logistic** | mean+var, two quantiles, mode+iqr, mean+quantile |
+| **Beta** | mean+var, mean+mode, two quantiles, mean+quantile |
 
-# Discovery: which distributions fit these constraints?
+## Specification styles
+
+```r
+# Moment-based
+make_dist("gamma", mean = 5, var = 3)
+make_dist("gamma", mean = 5, std = 2)          # std -> var
+make_dist("gamma", mean = 5, cv = 0.5)         # coefficient of variation
+make_dist("gamma", mean = 4, scv = 0.5)        # squared CV
+make_dist("exponential", mean = 3)              # 1-parameter family
+
+# Quantile-based
+make_dist("exponential", median = 2.0)
+make_dist("logistic", q1 = 2, q3 = 8)
+make_dist("gamma", quantiles = list(c(0.1, 1.0), c(0.9, 10.0)))
+make_dist("beta", mean = 0.4, median = 0.38)
+
+# Mode-based
+make_dist("gamma", mean = 5, mode = 3)
+make_dist("beta", mean = 0.4, mode = 0.35)
+make_dist("gamma", mode = 3, iqr = 4)
+make_dist("logistic", mode = 5, iqr = 4)
+```
+
+## Feasibility checks
+
+```r
+dist_exists("beta", mean = 0.5, var = 0.1)        # TRUE
+dist_exists("beta", mean = 0.5, var = 0.3)        # FALSE (var too large)
+dist_exists("exponential", mean = 2.5, var = 6.25) # TRUE (var == mean^2)
+dist_exists("exponential", mean = 2.5, var = 1.5)  # FALSE
+```
+
+## Discovery
+
+```r
 available_distributions(mean = 5, var = 3)
+# [1] "gamma"    "logistic"
+
+available_distributions(mean = 5, var = 25)
+# [1] "gamma"       "exponential" "logistic"
+
+available_distributions(mean = 0.5, var = 0.05)
+# [1] "gamma"    "logistic" "beta"
 ```
 
 ## Installation
 
-Not yet published. Development in progress.
+Not yet published. For development:
+
+```r
+# install.packages("devtools")
+devtools::install_github("yoninazarathy/distsfactory-r")
+```
 
 ## Authors
 
