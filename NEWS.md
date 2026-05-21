@@ -36,6 +36,7 @@ To migrate: replace `d$params$<key>` with `d$parent$params$<key>` on any wrapped
 
 ## Other
 
+- New family: `cauchy` (quantile-based construction only; no finite moments). Closes [#1](https://github.com/Distribution-Matching/distsfactory-r/issues/1). Brings the registered family count to 30.
 - `make_truncated()` now takes a parent `distsfactory_dist` rather than raw `name + params + d/p/q/r`.
 - `print()` on a wrapped distribution now shows the transform (e.g. `truncated to [-1, 4]`) and the parent's parameters on a second line.
 - 1017 testthat assertions pass (up from 925 in 0.1.0). 56 of those are new regression tests in `tests/testthat/test-wrapper_accessors.R` covering the new slots and the print method.
