@@ -19,15 +19,41 @@ parse_spec <- function(mean = NULL, var = NULL, std = NULL, cv = NULL,
                        scv = NULL, second_moment = NULL, median = NULL,
                        q1 = NULL, q3 = NULL, iqr = NULL, quantiles = NULL,
                        mode = NULL) {
-  # Resolve variance from alternative dispersion measures
-  if (is.null(var) && !is.null(std)) {
-    var <- std^2
-  } else if (is.null(var) && !is.null(mean) && !is.null(cv)) {
-    var <- (cv * mean)^2
-  } else if (is.null(var) && !is.null(mean) && !is.null(scv)) {
-    var <- scv * mean^2
-  } else if (is.null(var) && !is.null(mean) && !is.null(second_moment)) {
-    var <- second_moment - mean^2
+  # Reject non-finite numeric inputs up front. Bare NULL is fine (the param
+  # is absent); NA / Inf / NaN sneaking into a moment is almost always a bug.
+  .require_finite <- function(x, name) {
+    if (!is.null(x)) {
+      vals <- if (is.list(x)) unlist(x) else x
+      if (!all(is.finite(vals)))
+        stop(sprintf("`%s` must be finite (got %s)", name,
+                     paste(format(vals), collapse = ", ")))
+    }
+  }
+  for (nm in c("mean", "var", "std", "cv", "scv", "second_moment",
+               "median", "q1", "q3", "iqr", "mode")) {
+    .require_finite(get(nm), nm)
+  }
+  .require_finite(quantiles, "quantiles")
+
+  # Catch conflicting dispersion measures BEFORE one quietly wins.
+  candidate_vars <- list()
+  if (!is.null(var))           candidate_vars$var <- var
+  if (!is.null(std))           candidate_vars$std <- std^2
+  if (!is.null(mean) && !is.null(cv))            candidate_vars$cv  <- (cv * mean)^2
+  if (!is.null(mean) && !is.null(scv))           candidate_vars$scv <- scv * mean^2
+  if (!is.null(mean) && !is.null(second_moment)) candidate_vars$second_moment <- second_moment - mean^2
+  if (length(candidate_vars) >= 2) {
+    vals <- unlist(candidate_vars)
+    if (!isTRUE(all.equal(max(vals), min(vals),
+                          tolerance = 1e-9 * max(abs(vals), 1)))) {
+      stop(sprintf(
+        "Conflicting dispersion measures: %s. Provide only one of {var, std, cv, scv, second_moment}.",
+        paste(sprintf("%s -> var=%g", names(candidate_vars), vals), collapse = "; ")
+      ))
+    }
+  }
+  if (is.null(var) && length(candidate_vars) > 0) {
+    var <- candidate_vars[[1]]
   }
 
   # Mode-based specs

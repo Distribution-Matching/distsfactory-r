@@ -23,7 +23,14 @@ new_dist <- function(name, params, dfun, pfun, qfun, rfun) {
 
 #' @export
 print.distsfactory_dist <- function(x, ...) {
-  param_str <- paste(names(x$params), "=", format(unlist(x$params), digits = 4),
+  fmt <- function(v) {
+    if (length(v) > 1) {
+      sprintf("c(%s)", paste(format(v, digits = 4), collapse = ", "))
+    } else {
+      format(v, digits = 4)
+    }
+  }
+  param_str <- paste(names(x$params), "=", vapply(x$params, fmt, character(1)),
                      collapse = ", ")
   cat(sprintf("distsfactory: %s(%s)\n", x$name, param_str))
   invisible(x)

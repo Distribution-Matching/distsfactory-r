@@ -125,18 +125,28 @@ make_truncated <- function(inner_name, inner_params, dfun, pfun, qfun, rfun, lo,
 
   params <- c(inner_params, list(.lo = lo, .hi = hi))
 
-  d_trunc <- function(x, ...) {
+  d_trunc <- function(x, log = FALSE) {
     raw <- do.call(dfun, c(list(x), inner_params))
-    ifelse(x < lo | x > hi, 0, raw / Z)
+    in_support <- !(x < lo | x > hi)
+    if (log) {
+      log_raw <- do.call(dfun, c(list(x), inner_params, list(log = TRUE)))
+      ifelse(in_support, log_raw - log(Z), -Inf)
+    } else {
+      ifelse(in_support, raw / Z, 0)
+    }
   }
-  p_trunc <- function(q, ...) {
+  p_trunc <- function(q, lower.tail = TRUE, log.p = FALSE) {
     raw <- do.call(pfun, c(list(pmin(pmax(q, lo), hi)), inner_params))
-    (raw - F_lo) / Z
+    p <- (raw - F_lo) / Z
+    if (!lower.tail) p <- 1 - p
+    if (log.p) log(p) else p
   }
-  q_trunc <- function(p, ...) {
+  q_trunc <- function(p, lower.tail = TRUE, log.p = FALSE) {
+    if (log.p) p <- exp(p)
+    if (!lower.tail) p <- 1 - p
     do.call(qfun, c(list(F_lo + p * Z), inner_params))
   }
-  r_trunc <- function(n, ...) {
+  r_trunc <- function(n) {
     u <- runif(n)
     do.call(qfun, c(list(F_lo + u * Z), inner_params))
   }
@@ -220,10 +230,12 @@ shift_dist <- function(inner, a) {
   out <- list(
     name = inner$name,
     params = c(inner$params, list(.shift = a)),
-    d = function(x, ...) inner$d(x - a, ...),
-    p = function(q, ...) inner$p(q - a, ...),
-    q = function(p, ...) inner$q(p, ...) + a,
-    r = function(n, ...) inner$r(n, ...) + a
+    d = function(x, log = FALSE) inner$d(x - a, log = log),
+    p = function(q, lower.tail = TRUE, log.p = FALSE)
+          inner$p(q - a, lower.tail = lower.tail, log.p = log.p),
+    q = function(p, lower.tail = TRUE, log.p = FALSE)
+          inner$q(p, lower.tail = lower.tail, log.p = log.p) + a,
+    r = function(n) inner$r(n) + a
   )
   class(out) <- "distsfactory_dist"
   out
@@ -233,10 +245,19 @@ flip_dist <- function(inner, b) {
   out <- list(
     name = inner$name,
     params = c(inner$params, list(.flip = b)),
-    d = function(x, ...) inner$d(b - x, ...),
-    p = function(q, ...) 1 - inner$p(b - q, ...),
-    q = function(p, ...) b - inner$q(1 - p, ...),
-    r = function(n, ...) b - inner$r(n, ...)
+    # X = b - Y;  f_X(x) = f_Y(b - x);  F_X(x) = 1 - F_Y(b - x)
+    d = function(x, log = FALSE) inner$d(b - x, log = log),
+    p = function(q, lower.tail = TRUE, log.p = FALSE) {
+      p <- 1 - inner$p(b - q)
+      if (!lower.tail) p <- 1 - p
+      if (log.p) log(p) else p
+    },
+    q = function(p, lower.tail = TRUE, log.p = FALSE) {
+      if (log.p) p <- exp(p)
+      if (!lower.tail) p <- 1 - p
+      b - inner$q(1 - p)
+    },
+    r = function(n) b - inner$r(n)
   )
   class(out) <- "distsfactory_dist"
   out
@@ -246,10 +267,16 @@ scale_dist <- function(inner, a, w) {
   out <- list(
     name = inner$name,
     params = c(inner$params, list(.loc = a, .scale = w)),
-    d = function(x, ...) inner$d((x - a) / w, ...) / w,
-    p = function(q, ...) inner$p((q - a) / w, ...),
-    q = function(p, ...) a + w * inner$q(p, ...),
-    r = function(n, ...) a + w * inner$r(n, ...)
+    # X = a + w*Y;  f_X(x) = f_Y((x-a)/w) / w;  F_X(x) = F_Y((x-a)/w)
+    d = function(x, log = FALSE) {
+      if (log) inner$d((x - a) / w, log = TRUE) - log(w)
+      else inner$d((x - a) / w) / w
+    },
+    p = function(q, lower.tail = TRUE, log.p = FALSE)
+          inner$p((q - a) / w, lower.tail = lower.tail, log.p = log.p),
+    q = function(p, lower.tail = TRUE, log.p = FALSE)
+          a + w * inner$q(p, lower.tail = lower.tail, log.p = log.p),
+    r = function(n) a + w * inner$r(n)
   )
   class(out) <- "distsfactory_dist"
   out

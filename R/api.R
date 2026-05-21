@@ -208,6 +208,12 @@ available_distributions <- function(mean = NULL, var = NULL, std = NULL,
                                     q1 = NULL, q3 = NULL, iqr = NULL,
                                     quantiles = NULL, mode = NULL,
                                     support = NULL) {
+  if (all(vapply(list(mean, var, std, cv, scv, second_moment, median,
+                      q1, q3, iqr, quantiles, mode, support),
+                 is.null, logical(1)))) {
+    # No constraints — return the full registered set.
+    return(names(.dist_handlers))
+  }
   spec <- parse_spec(
     mean = mean, var = var, std = std, cv = cv, scv = scv,
     second_moment = second_moment, median = median, q1 = q1, q3 = q3,

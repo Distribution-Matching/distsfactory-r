@@ -40,8 +40,7 @@ pareto_from_mean_var <- function(mean, var) {
   #            = 1 / (alpha * (alpha-2))
   # So alpha*(alpha-2) = 1/(var/mu^2)  ->  alpha^2 - 2*alpha - mu^2/var = 0
   R <- mean^2 / var
-  disc <- 4 + 4 * R
-  alpha <- 1 + sqrt(1 + R)  # take positive root, requires alpha > 2
+  alpha <- 1 + sqrt(1 + R)  # positive root of alpha^2 - 2*alpha - R = 0
   if (alpha <= 2) stop("Pareto mean+var: implied shape must exceed 2")
   xm <- mean * (alpha - 1) / alpha
   new_dist("pareto", list(shape = alpha, scale = xm),

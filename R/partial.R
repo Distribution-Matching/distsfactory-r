@@ -101,6 +101,13 @@ print.partial_dist <- function(x, ...) {
     geometric   = list(d = dgeom,   p = pgeom,   q = qgeom,   r = rgeom),
     discrete_uniform = list(d = ddunif_, p = pdunif_, q = qdunif_, r = rdunif_),
     discrete_sym_triangular = list(d = ddst_, p = pdst_, q = qdst_, r = rdst_),
+    discrete_triangular = list(d = ddtri_, p = pdtri_, q = qdtri_, r = rdtri_),
+    triangular  = list(d = function(x, a, b, c, log = FALSE) dtriang_(x, a, b, c, log),
+                       p = function(q, a, b, c, lower.tail = TRUE, log.p = FALSE)
+                             ptriang_(q, a, b, c, lower.tail, log.p),
+                       q = function(p, a, b, c, lower.tail = TRUE, log.p = FALSE)
+                             qtriang_(p, a, b, c, lower.tail, log.p),
+                       r = function(n, a, b, c) rtriang_(n, a, b, c)),
     stop("Family ", name, " not supported by partial_dist")
   )
 }
@@ -112,17 +119,25 @@ print.partial_dist <- function(x, ...) {
 # params are pinned, fall back to ones — Newton will move to the right region.
 .partial_initial <- function(name, free_names, fixed, mean, var) {
   canon <- canonical_params(name)
-  # Only use the from_mean_var bootstrap when ALL canonical params are free
-  # and (mean, var) targets are present.
-  if (length(fixed) == 0 && !is.null(mean) && !is.null(var) &&
-      identical(sort(free_names), sort(canon))) {
+  # Try the family's own constructor for a starting point that respects the
+  # target moments — and the mode, when the user pinned it. Falls back to
+  # rep(1, k) if the constructor doesn't accept the available spec.
+  if (!is.null(mean) && !is.null(var)) {
     seed <- tryCatch({
       handler <- .dist_handlers[[name]]
-      seed_dist <- handler$dispatch(
-        structure(list(mean = mean, var = var), class = "MeanVarSpec"))
+      # Pinned `c` on triangular families is the mode; surface it to the
+      # MeanVarMode constructor so the seed honours it.
+      pinned_mode <- fixed$mode %||% fixed$c
+      spec <- if (!is.null(pinned_mode)) {
+        structure(list(mean = mean, var = var, mode = pinned_mode),
+                  class = "MeanVarModeSpec")
+      } else {
+        structure(list(mean = mean, var = var), class = "MeanVarSpec")
+      }
+      seed_dist <- handler$dispatch(spec)
       vapply(free_names, function(n) {
         v <- seed_dist$params[[n]]
-        if (is.null(v) || !is.numeric(v)) NA_real_ else as.numeric(v)
+        if (is.null(v) || !is.numeric(v)) NA_real_ else unname(as.numeric(v))
       }, numeric(1))
     }, error = function(e) NULL)
     if (!is.null(seed) && all(is.finite(seed))) return(seed)
@@ -204,15 +219,16 @@ make_dist_from_partial <- function(spec, mean = NULL, var = NULL, std = NULL,
 .bracketed_brentq <- function(f, x0 = 1) {
   # Try narrower brackets first to avoid catastrophic overflow on families
   # whose moments grow super-exponentially with the parameter (e.g. lognormal
-  # sdlog), and include brackets that exclude divergent regions (e.g. TDist
-  # variance is finite only for df > 2).
+  # sdlog). Include brackets that exclude divergent regions of finite-variance
+  # constraints (TDist needs df > 2; Pareto/Frechet/InverseGamma need shape > 2).
   candidates <- list(
-    c(1e-3, 10),       # narrow positive — typical scale-like params
+    c(1e-3, 10),         # narrow positive — typical scale-like params
     c(0.1, 100),
-    c(2.001, 1e3),     # tdist df > 2 (finite variance only there)
-    c(1e-6, 1e3),      # original wide positive
-    c(1e-9, 1e6),
-    c(-1e6, 1e6)       # last resort — signed params
+    c(2.001, 1e3),       # finite-variance shape parameters (tdist, pareto,
+                         # frechet, inverse_gamma): need shape > 2
+    c(1.001, 1e3),       # finite-mean shape parameters (pareto, frechet need >1)
+    c(1e-6, 1e3),        # wide positive fallback
+    c(1e-9, 1e6)
   )
   for (br in candidates) {
     fa <- tryCatch(f(br[1]), error = function(e) NA_real_)
