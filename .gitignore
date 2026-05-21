@@ -5,3 +5,7 @@
 *.o
 *.so
 *.dll
+
+# R CMD build / check artifacts
+*.Rcheck/
+distsfactory_*.tar.gz
