@@ -23,7 +23,14 @@
   folded_normal = list(dispatch = foldednorm_dispatch, exists_mv = foldednorm_exists_mean_var),
   erlang      = list(dispatch = erlang_dispatch,      exists_mv = erlang_exists_mean_var),
   sym_triangular = list(dispatch = symtri_dispatch,   exists_mv = symtri_exists_mean_var),
-  triangular  = list(dispatch = triang_dispatch,      exists_mv = triang_exists_mean_var)
+  triangular  = list(dispatch = triang_dispatch,      exists_mv = triang_exists_mean_var),
+  binomial    = list(dispatch = binomial_dispatch,    exists_mv = binomial_exists_mean_var),
+  poisson     = list(dispatch = poisson_dispatch,     exists_mv = poisson_exists_mean_var),
+  negative_binomial = list(dispatch = nbinom_dispatch, exists_mv = nbinom_exists_mean_var),
+  geometric   = list(dispatch = geometric_dispatch,   exists_mv = geometric_exists_mean_var),
+  discrete_uniform = list(dispatch = dunif_dispatch,  exists_mv = dunif_exists_mean_var),
+  discrete_sym_triangular = list(dispatch = dst_dispatch, exists_mv = dst_exists_mean_var),
+  discrete_triangular = list(dispatch = dtri_dispatch, exists_mv = dtri_exists_mean_var)
 )
 
 # Aliases
@@ -48,7 +55,14 @@
   "inverse-gamma" = "inverse_gamma",
   foldednormal = "folded_normal",
   symtriangular = "sym_triangular",
-  triang = "triangular"
+  triang = "triangular",
+  nbinom = "negative_binomial",
+  "negbinom" = "negative_binomial",
+  binom = "binomial",
+  geom = "geometric",
+  pois = "poisson",
+  dunif = "discrete_uniform",
+  randint = "discrete_uniform"
 )
 
 resolve_dist_name <- function(dist) {

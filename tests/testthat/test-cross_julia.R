@@ -30,7 +30,10 @@ SUPPORTED_FAMILIES <- c("gamma", "exponential", "logistic", "beta", "normal",
                         "lognormal", "uniform", "weibull", "tdist", "chisq",
                         "fdist", "laplace", "gumbel", "rayleigh", "pareto",
                         "frechet", "inverse_gamma", "chi", "folded_normal",
-                        "erlang", "sym_triangular", "triangular")
+                        "erlang", "sym_triangular", "triangular",
+                        "binomial", "poisson", "negative_binomial", "geometric",
+                        "discrete_uniform", "discrete_sym_triangular",
+                        "discrete_triangular")
 
 closed_form_mean <- function(name, params) {
   switch(
@@ -61,6 +64,20 @@ closed_form_mean <- function(name, params) {
     erlang        = params$shape * params$scale,
     sym_triangular = params$location,
     triangular    = (params$a + params$b + params$c) / 3,
+    binomial      = params$size * params$prob,
+    poisson       = params$lambda,
+    negative_binomial = params$size * (1 - params$prob) / params$prob,
+    geometric     = (1 - params$prob) / params$prob,
+    discrete_uniform = (params$min + params$max) / 2,
+    discrete_sym_triangular = params$mu,
+    discrete_triangular = {
+      a <- params$a; b <- params$b; c <- params$c
+      Z <- (b - a + 2) / 2
+      ks <- a:b
+      pmf <- ifelse(ks <= c, (ks - a + 1) / (c - a + 1) / Z,
+                              (b - ks + 1) / (b - c + 1) / Z)
+      sum(ks * pmf)
+    },
     stop("no closed-form mean wired for ", name)
   )
 }
@@ -122,6 +139,21 @@ closed_form_var <- function(name, params) {
     triangular    = {
       a <- params$a; b <- params$b; c <- params$c
       (a^2 + b^2 + c^2 - a * b - a * c - b * c) / 18
+    },
+    binomial      = params$size * params$prob * (1 - params$prob),
+    poisson       = params$lambda,
+    negative_binomial = params$size * (1 - params$prob) / params$prob^2,
+    geometric     = (1 - params$prob) / params$prob^2,
+    discrete_uniform = ((params$max - params$min + 1)^2 - 1) / 12,
+    discrete_sym_triangular = params$n * (params$n + 2) / 6,
+    discrete_triangular = {
+      a <- params$a; b <- params$b; c <- params$c
+      Z <- (b - a + 2) / 2
+      ks <- a:b
+      pmf <- ifelse(ks <= c, (ks - a + 1) / (c - a + 1) / Z,
+                              (b - ks + 1) / (b - c + 1) / Z)
+      m <- sum(ks * pmf)
+      sum((ks - m)^2 * pmf)
     },
     stop("no closed-form var wired for ", name)
   )
