@@ -31,12 +31,26 @@ d$params        # list(shape = 8.33, rate = 1.67)
 
 ## Supported distributions
 
-| Distribution | Supported specifications |
-|---|---|
-| **Gamma** | mean+var, mean+mode, mode+var, mode+quantile, mode+iqr, two quantiles, mean+quantile |
-| **Exponential** | mean, mean+var, var, single quantile |
-| **Logistic** | mean+var, two quantiles, mode+iqr, mean+quantile |
-| **Beta** | mean+var, mean+mode, two quantiles, mean+quantile |
+29 families across real-line, positive, unit-interval, and integer supports.
+Spec styles available per family vary; the canonical surface includes mean+var
+(with std/cv/scv/second_moment as alternatives), two-quantile, mean+quantile,
+mode-augmented specs, and (for triangular families) mean+var+mode.
+
+Real-line continuous: `normal`, `laplace`, `logistic`, `gumbel`, `tdist`,
+`uniform`, `sym_triangular`, `triangular`.
+
+Positive continuous: `gamma`, `erlang`, `exponential`, `lognormal`, `weibull`,
+`frechet`, `chi`, `chisq`, `rayleigh`, `fdist`, `inverse_gamma`, `pareto`,
+`folded_normal`.
+
+Unit-interval continuous: `beta`.
+
+Discrete: `binomial`, `poisson`, `negative_binomial`, `geometric`,
+`discrete_uniform`, `discrete_sym_triangular`, `discrete_triangular`.
+
+Aliases follow the conventional R / scipy naming where relevant (`norm`,
+`gauss`, `lnorm`, `invgamma`, `nbinom`, `binom`, `geom`, `pois`, `dunif`,
+`student`, `t`, `f`, ...).
 
 ## Specification styles
 
@@ -59,6 +73,34 @@ make_dist("gamma", mean = 5, mode = 3)
 make_dist("beta", mean = 0.4, mode = 0.35)
 make_dist("gamma", mode = 3, iqr = 4)
 make_dist("logistic", mode = 5, iqr = 4)
+
+# Mean + var + mode (for 3-parameter triangular)
+make_dist("triangular", mean = 5, var = 2, mode = 4)
+```
+
+## Arbitrary supports
+
+Pass `support = c(lo, hi)` (either endpoint can be `Inf`) to place a
+distribution on a non-natural interval. The right transform is selected
+automatically — affine shift / flip when the requested shape matches the
+natural one, affine scale for unit-interval families, truncation otherwise.
+For truncated Normal / Laplace / Logistic the constructor gates feasibility
+on the Langevin envelope.
+
+```r
+make_dist("beta",   mean = 3.5, var = 0.5, support = c(2, 7))     # affine
+make_dist("gamma",  mean = 8,   var = 4,   support = c(3, Inf))   # shift
+make_dist("normal", mean = 0,   var = 0.1, support = c(-1, 1))    # truncate
+```
+
+## Partial distributions
+
+Pin some parameters and let the rest be solved from moments.
+
+```r
+spec <- partial_dist("gamma", shape = 3.0)
+make_dist(spec, mean = 5.0)$params
+# $shape: 3.0;  $rate: 0.6
 ```
 
 ## Feasibility checks

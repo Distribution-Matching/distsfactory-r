@@ -6,7 +6,7 @@
 #' @param std Target standard deviation.
 #' @param cv Coefficient of variation.
 #' @param scv Squared coefficient of variation.
-#' @param second_moment E[X^2].
+#' @param second_moment Target second raw moment.
 #' @param median Target median.
 #' @param q1 First quartile.
 #' @param q3 Third quartile.

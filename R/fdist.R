@@ -11,7 +11,7 @@ fdist_from_mean_var <- function(mean, var) {
   # df2 from mean:  mean = df2/(df2-2)  ->  df2 = 2*mean/(mean-1)
   df2 <- 2 * mean / (mean - 1)
   if (df2 <= 4) {
-    stop(sprintf("FDist mean=%g implies df2=%g <= 4 — variance undefined", mean, df2))
+    stop(sprintf("FDist mean=%g implies df2=%g <= 4 (variance undefined)", mean, df2))
   }
   # var = 2*df2^2 * (df1+df2-2) / (df1 * (df2-2)^2 * (df2-4))
   # solve for df1: let C = 2*df2^2 / ((df2-2)^2 * (df2-4)).

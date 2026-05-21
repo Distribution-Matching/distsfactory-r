@@ -93,7 +93,7 @@ resolve_dist_name <- function(dist) {
 #' @param std Target standard deviation (converted to variance).
 #' @param cv Coefficient of variation (requires \code{mean}).
 #' @param scv Squared coefficient of variation (requires \code{mean}).
-#' @param second_moment E[X^2] (requires \code{mean}).
+#' @param second_moment Target second raw moment (requires \code{mean}).
 #' @param median Target median (p = 0.5 quantile).
 #' @param q1 First quartile (p = 0.25).
 #' @param q3 Third quartile (p = 0.75).
@@ -101,6 +101,12 @@ resolve_dist_name <- function(dist) {
 #' @param quantiles List of two \code{c(p, q)} vectors for arbitrary quantile
 #'   constraints.
 #' @param mode Target mode.
+#' @param support Optional length-2 numeric vector \code{c(lo, hi)} giving the
+#'   target support; either endpoint may be \code{Inf}. When given, the
+#'   distribution is placed on this support via an affine transform (when the
+#'   requested shape matches the natural one) or truncation (when it is
+#'   strictly smaller). Currently used together with \code{mean} and
+#'   \code{var}.
 #'
 #' @return An object of class \code{"distsfactory_dist"} with elements:
 #'   \describe{
