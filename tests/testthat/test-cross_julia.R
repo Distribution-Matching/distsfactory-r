@@ -26,7 +26,8 @@ oracle_path <- function() {
 # Julia battery; we filter at load time to whatever R covers today. As more
 # families are added to the R package, extend this vector — eventually it
 # should reach Julia/Python parity.
-SUPPORTED_FAMILIES <- c("gamma", "exponential", "logistic", "beta")
+SUPPORTED_FAMILIES <- c("gamma", "exponential", "logistic", "beta", "normal",
+                        "lognormal")
 
 closed_form_mean <- function(name, params) {
   switch(
@@ -35,6 +36,8 @@ closed_form_mean <- function(name, params) {
     exponential = 1 / params$rate,
     logistic    = params$location,
     beta        = params$shape1 / (params$shape1 + params$shape2),
+    normal      = params$mean,
+    lognormal   = exp(params$meanlog + params$sdlog^2 / 2),
     stop("no closed-form mean wired for ", name)
   )
 }
@@ -48,6 +51,11 @@ closed_form_var <- function(name, params) {
     beta        = {
       a <- params$shape1; b <- params$shape2
       a * b / ((a + b)^2 * (a + b + 1))
+    },
+    normal      = params$sd^2,
+    lognormal   = {
+      s2 <- params$sdlog^2
+      (exp(s2) - 1) * exp(2 * params$meanlog + s2)
     },
     stop("no closed-form var wired for ", name)
   )

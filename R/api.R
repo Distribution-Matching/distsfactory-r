@@ -2,14 +2,24 @@
 
 # Registry of distribution handlers
 .dist_handlers <- list(
-  gamma = list(dispatch = gamma_dispatch, exists_mv = gamma_exists_mean_var),
+  gamma       = list(dispatch = gamma_dispatch,       exists_mv = gamma_exists_mean_var),
   exponential = list(dispatch = exponential_dispatch, exists_mv = exponential_exists_mean_var),
-  logistic = list(dispatch = logistic_dispatch, exists_mv = logistic_exists_mean_var),
-  beta = list(dispatch = beta_dispatch, exists_mv = beta_exists_mean_var)
+  logistic    = list(dispatch = logistic_dispatch,    exists_mv = logistic_exists_mean_var),
+  beta        = list(dispatch = beta_dispatch,        exists_mv = beta_exists_mean_var),
+  normal      = list(dispatch = normal_dispatch,      exists_mv = normal_exists_mean_var),
+  lognormal   = list(dispatch = lognormal_dispatch,   exists_mv = lognormal_exists_mean_var)
 )
 
 # Aliases
-.dist_aliases <- c(exp = "exponential", expon = "exponential")
+.dist_aliases <- c(
+  exp       = "exponential",
+  expon     = "exponential",
+  norm      = "normal",
+  gauss     = "normal",
+  gaussian  = "normal",
+  lnorm     = "lognormal",
+  log_normal = "lognormal"
+)
 
 resolve_dist_name <- function(dist) {
   name <- tolower(dist)

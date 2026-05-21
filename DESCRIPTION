@@ -26,4 +26,6 @@ Collate:
     'exponential.R'
     'logistic.R'
     'beta.R'
+    'normal.R'
+    'lognormal.R'
     'api.R'
