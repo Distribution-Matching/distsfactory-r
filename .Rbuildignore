@@ -1,3 +1,6 @@
 ^\.Rproj\.user$
 ^.*\.Rproj$
 ^\.github$
+^scripts$
+^distsfactory\.Rcheck$
+^distsfactory_.*\.tar\.gz$
