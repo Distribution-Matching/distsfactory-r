@@ -28,7 +28,8 @@ oracle_path <- function() {
 # should reach Julia/Python parity.
 SUPPORTED_FAMILIES <- c("gamma", "exponential", "logistic", "beta", "normal",
                         "lognormal", "uniform", "weibull", "tdist", "chisq",
-                        "fdist")
+                        "fdist", "laplace", "gumbel", "rayleigh", "pareto",
+                        "frechet", "inverse_gamma")
 
 closed_form_mean <- function(name, params) {
   switch(
@@ -44,6 +45,12 @@ closed_form_mean <- function(name, params) {
     tdist       = 0,
     chisq       = params$df,
     fdist       = params$df2 / (params$df2 - 2),
+    laplace     = params$location,
+    gumbel      = params$location + params$scale * (-digamma(1)),
+    rayleigh    = params$scale * sqrt(pi / 2),
+    pareto      = params$shape * params$scale / (params$shape - 1),
+    frechet     = params$scale * gamma(1 - 1 / params$shape),
+    inverse_gamma = params$scale / (params$shape - 1),
     stop("no closed-form mean wired for ", name)
   )
 }
@@ -73,6 +80,22 @@ closed_form_var <- function(name, params) {
     fdist       = {
       d1 <- params$df1; d2 <- params$df2
       2 * d2^2 * (d1 + d2 - 2) / (d1 * (d2 - 2)^2 * (d2 - 4))
+    },
+    laplace     = 2 * params$scale^2,
+    gumbel      = (pi^2 / 6) * params$scale^2,
+    rayleigh    = params$scale^2 * (4 - pi) / 2,
+    pareto      = {
+      a <- params$shape; xm <- params$scale
+      (xm^2 * a) / ((a - 1)^2 * (a - 2))
+    },
+    frechet     = {
+      a <- params$shape; sg <- params$scale
+      g1 <- gamma(1 - 1 / a); g2 <- gamma(1 - 2 / a)
+      sg^2 * (g2 - g1^2)
+    },
+    inverse_gamma = {
+      a <- params$shape; b <- params$scale
+      b^2 / ((a - 1)^2 * (a - 2))
     },
     stop("no closed-form var wired for ", name)
   )

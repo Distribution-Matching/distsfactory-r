@@ -1,5 +1,5 @@
 test_that("unknown distribution raises", {
-  expect_error(make_dist("pareto", mean = 5), "Unknown distribution")
+  expect_error(make_dist("nonsense_dist", mean = 5), "Unknown distribution")
 })
 
 test_that("no spec raises", {

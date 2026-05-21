@@ -44,6 +44,8 @@ parse_spec <- function(mean = NULL, var = NULL, std = NULL, cv = NULL,
       return(structure(list(mode = mode, p = 0.75, q = q3), class = "ModeQuantileSpec"))
     if (!is.null(iqr))
       return(structure(list(mode = mode, iqr = iqr), class = "ModeIQRSpec"))
+    # Mode alone — only some 1-parameter families accept this (e.g. Rayleigh).
+    return(structure(list(mode = mode), class = "ModeSpec"))
   }
 
   # Quantile-based specs

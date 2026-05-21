@@ -12,7 +12,13 @@
   weibull     = list(dispatch = weibull_dispatch,     exists_mv = weibull_exists_mean_var),
   tdist       = list(dispatch = tdist_dispatch,       exists_mv = tdist_exists_mean_var),
   chisq       = list(dispatch = chisq_dispatch,       exists_mv = chisq_exists_mean_var),
-  fdist       = list(dispatch = fdist_dispatch,       exists_mv = fdist_exists_mean_var)
+  fdist       = list(dispatch = fdist_dispatch,       exists_mv = fdist_exists_mean_var),
+  laplace     = list(dispatch = laplace_dispatch,     exists_mv = laplace_exists_mean_var),
+  gumbel      = list(dispatch = gumbel_dispatch,      exists_mv = gumbel_exists_mean_var),
+  rayleigh    = list(dispatch = rayleigh_dispatch,    exists_mv = rayleigh_exists_mean_var),
+  pareto      = list(dispatch = pareto_dispatch,      exists_mv = pareto_exists_mean_var),
+  frechet     = list(dispatch = frechet_dispatch,     exists_mv = frechet_exists_mean_var),
+  inverse_gamma = list(dispatch = invgamma_dispatch,  exists_mv = invgamma_exists_mean_var)
 )
 
 # Aliases
@@ -32,7 +38,9 @@
   chisquare = "chisq",
   chi_squared = "chisq",
   f         = "fdist",
-  fisher    = "fdist"
+  fisher    = "fdist",
+  invgamma  = "inverse_gamma",
+  "inverse-gamma" = "inverse_gamma"
 )
 
 resolve_dist_name <- function(dist) {
