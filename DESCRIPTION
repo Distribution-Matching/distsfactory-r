@@ -1,6 +1,6 @@
 Package: distsfactory
 Title: Construct Probability Distributions from Partial Specifications
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person("Ron", "Ashri", role = "aut"),
     person("Sarat", "Moka", role = "aut"),

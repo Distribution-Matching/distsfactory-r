@@ -1,3 +1,46 @@
+# distsfactory 0.2.0
+
+## New: summary-statistic methods
+
+Every `distsfactory_dist` now exposes `$mean()`, `$var()`, `$std()`, and `$median()`. The base-R S3 generics `mean(d)`, `median(d)`, and `quantile(d, probs)` also dispatch. This mirrors Julia's `mean(d)`, `var(d)`, `std(d)`, `median(d)` and Python's `d.mean()`, `d.var()`, `d.std()`, `d.median()`. Use `d$var()` / `d$std()` for variance and standard deviation because base R's `var()` is not an S3 generic. For Cauchy (no finite moments) these return `NaN`.
+
+## Breaking: wrapped distributions expose `$parent` and `$support` instead of a flat `$params`
+
+The 0.1.0 design flattened a wrapped distribution's parent parameters into its `$params` slot. For a truncated Normal that meant `$params$mean` was the *parent's* `mu`, not the truncated distribution's mean — confusing and easy to misuse.
+
+In 0.2.0, every wrapped distribution exposes:
+
+- `$parent`: the un-transformed `distsfactory_dist`, with its own `$params`, `$mean()`, `$var()`, etc.
+- `$support`: a length-2 numeric vector giving the wrapped distribution's support.
+- A transform-specific sibling slot: `$shift` (affine shift), `$flip_point` (affine flip), `$scale_loc` + `$scale_width` (affine scale), or nothing extra for truncation.
+
+Wrapped distributions no longer have a `$params` slot — reading it returns `NULL`, which fails visibly rather than the prior silent mislabelling.
+
+Before:
+
+```r
+d <- make_dist("normal", mean = 1.0, std = 0.8, support = c(-1, 4))
+d$params   # list(mean = 0.9822, sd = 0.8232, .lo = -1, .hi = 4)  -- ambiguous
+```
+
+After:
+
+```r
+d$mean()              # 1.0           -- the truncated distribution's mean
+d$support             # c(-1, 4)
+d$parent$params       # list(mean = 0.9822, sd = 0.8232)  -- the parent's params
+d$parent$mean()       # 0.9822        -- the parent's mean
+```
+
+To migrate: replace `d$params$<key>` with `d$parent$params$<key>` on any wrapped distribution. The `$params` slot is unchanged on plain (un-wrapped) family distributions.
+
+## Other
+
+- `make_truncated()` now takes a parent `distsfactory_dist` rather than raw `name + params + d/p/q/r`.
+- `print()` on a wrapped distribution now shows the transform (e.g. `truncated to [-1, 4]`) and the parent's parameters on a second line.
+- 1017 testthat assertions pass (up from 925 in 0.1.0). 56 of those are new regression tests in `tests/testthat/test-wrapper_accessors.R` covering the new slots and the print method.
+
+
 # distsfactory 0.1.0
 
 First release. R port of [DistributionsFactories.jl](https://github.com/Distribution-Matching/DistributionsFactories.jl) (Julia is the parameterization master). Cross-validated against the same Julia oracle as the Python sibling package.

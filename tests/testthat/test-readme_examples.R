@@ -15,8 +15,11 @@ test_that("README Quick start: gamma mean+var basic", {
 test_that("README Quick start: truncated Normal on [-1, 4]", {
   d <- make_dist("normal", mean = 1.0, std = 0.8, support = c(-1, 4))
   expect_equal(d$name, "truncated_normal")
-  expect_equal(d$params$mean, 0.9822, tolerance = 1e-3)
-  expect_equal(d$params$sd,   0.8232, tolerance = 1e-3)
+  expect_equal(d$mean(), 1.0, tolerance = 1e-6)
+  expect_equal(d$std(),  0.8, tolerance = 1e-6)
+  expect_equal(d$support, c(-1, 4))
+  expect_equal(d$parent$params$mean, 0.9822, tolerance = 1e-3)
+  expect_equal(d$parent$params$sd,   0.8232, tolerance = 1e-3)
   expect_equal(d$p(-1), 0, tolerance = 1e-9)
   expect_equal(d$p(4),  1, tolerance = 1e-9)
 })

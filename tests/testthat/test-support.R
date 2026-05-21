@@ -103,8 +103,9 @@ test_that("truncated Normal matches Python README example", {
   # README/Python: mean=1.0, std=0.8, support=(-1, 4)
   d <- make_dist("normal", mean = 1.0, std = 0.8, support = c(-1, 4))
   # Parent params should be approximately (loc=0.9822, scale=0.8232).
-  expect_equal(d$params$mean, 0.9822, tolerance = 1e-3)
-  expect_equal(d$params$sd,   0.8232, tolerance = 1e-3)
+  expect_equal(d$parent$params$mean, 0.9822, tolerance = 1e-3)
+  expect_equal(d$parent$params$sd,   0.8232, tolerance = 1e-3)
+  expect_equal(d$support, c(-1, 4))
   .trunc_moments_check(d, -1, 4, 1.0, 0.64, tol = 1e-3)  # var = std^2
 })
 

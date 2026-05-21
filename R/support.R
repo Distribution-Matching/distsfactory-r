@@ -112,32 +112,38 @@ dist_exists_on_support <- function(name, mean, var, support) {
 
 # ---------------------------------------------------------------------------
 # Truncation wrapper: build a frozen-like dist whose d/p/q/r are the inner
-# dist conditioned on x in [lo, hi].
+# (parent) dist conditioned on x in [lo, hi].
+#
+# `parent` is a distsfactory_dist returned from new_dist (so it carries its
+# own $params, $mean(), $var(), ...). The truncated wrapper exposes
+# $parent (the un-truncated distribution) and $support (the (lo, hi) endpoints
+# of the truncation). It does NOT carry a $params slot: the parent's params
+# (which are the parent's parameterisation, e.g. mu/sigma of the underlying
+# Normal) would collide naming-wise with the truncated distribution's own
+# moments. Use d$parent$params to inspect them.
 # ---------------------------------------------------------------------------
 
-make_truncated <- function(inner_name, inner_params, dfun, pfun, qfun, rfun, lo, hi) {
-  F_lo <- if (is.infinite(lo) && lo < 0) 0
-          else do.call(pfun, c(list(lo), inner_params))
-  F_hi <- if (is.infinite(hi) && hi > 0) 1
-          else do.call(pfun, c(list(hi), inner_params))
+make_truncated <- function(parent, lo, hi) {
+  inner_name <- parent$name
+  F_lo <- if (is.infinite(lo) && lo < 0) 0 else parent$p(lo)
+  F_hi <- if (is.infinite(hi) && hi > 0) 1 else parent$p(hi)
   Z <- F_hi - F_lo
   if (!(Z > 0))
-    stop(sprintf("Truncated %s: truncation mass is zero on [%g, %g]", inner_name, lo, hi))
-
-  params <- c(inner_params, list(.lo = lo, .hi = hi))
+    stop(sprintf("Truncated %s: truncation mass is zero on [%g, %g]",
+                 inner_name, lo, hi))
 
   d_trunc <- function(x, log = FALSE) {
-    raw <- do.call(dfun, c(list(x), inner_params))
     in_support <- !(x < lo | x > hi)
     if (log) {
-      log_raw <- do.call(dfun, c(list(x), inner_params, list(log = TRUE)))
+      log_raw <- parent$d(x, log = TRUE)
       ifelse(in_support, log_raw - log(Z), -Inf)
     } else {
+      raw <- parent$d(x)
       ifelse(in_support, raw / Z, 0)
     }
   }
   p_trunc <- function(q, lower.tail = TRUE, log.p = FALSE) {
-    raw <- do.call(pfun, c(list(pmin(pmax(q, lo), hi)), inner_params))
+    raw <- parent$p(pmin(pmax(q, lo), hi))
     p <- (raw - F_lo) / Z
     if (!lower.tail) p <- 1 - p
     if (log.p) log(p) else p
@@ -145,18 +151,40 @@ make_truncated <- function(inner_name, inner_params, dfun, pfun, qfun, rfun, lo,
   q_trunc <- function(p, lower.tail = TRUE, log.p = FALSE) {
     if (log.p) p <- exp(p)
     if (!lower.tail) p <- 1 - p
-    do.call(qfun, c(list(F_lo + p * Z), inner_params))
+    parent$q(F_lo + p * Z)
   }
-  r_trunc <- function(n) {
-    u <- runif(n)
-    do.call(qfun, c(list(F_lo + u * Z), inner_params))
+  r_trunc <- function(n) parent$q(F_lo + runif(n) * Z)
+
+  # Moments of the truncated distribution by integration against the
+  # already-normalised truncated density. For half-infinite cases the
+  # integrand decays exponentially so integrate() is well-behaved.
+  ax <- if (is.infinite(lo)) -Inf else lo
+  bx <- if (is.infinite(hi)) Inf else hi
+  trunc_mean <- function() {
+    tryCatch(stats::integrate(function(x) x * d_trunc(x), ax, bx,
+                              rel.tol = 1e-10)$value,
+             error = function(e) NaN)
+  }
+  trunc_var <- function() {
+    tryCatch({
+      m  <- stats::integrate(function(x) x   * d_trunc(x), ax, bx,
+                             rel.tol = 1e-10)$value
+      m2 <- stats::integrate(function(x) x^2 * d_trunc(x), ax, bx,
+                             rel.tol = 1e-10)$value
+      m2 - m^2
+    }, error = function(e) NaN)
   }
 
   out <- list(
-    name = paste0("truncated_", inner_name),
-    params = params,
-    d = d_trunc, p = p_trunc, q = q_trunc, r = r_trunc
+    name    = paste0("truncated_", inner_name),
+    parent  = parent,
+    support = c(lo, hi),
+    d = d_trunc, p = p_trunc, q = q_trunc, r = r_trunc,
+    mean = trunc_mean,
+    var  = trunc_var
   )
+  out$std    <- function() sqrt(out$var())
+  out$median <- function() out$q(0.5)
   class(out) <- "distsfactory_dist"
   out
 }
@@ -227,58 +255,85 @@ dist_on_support <- function(name, spec, support) {
 
 # Affine shift / flip / scale wrappers for an existing distsfactory_dist.
 
-shift_dist <- function(inner, a) {
+# Affine wrappers. Each exposes `$parent` (the un-transformed distsfactory_dist)
+# and transform-specific accessors. `$support` reflects the wrapped distribution's
+# support, derived from the transform. No `$params` slot — inspect the parent
+# directly with `d$parent$params`.
+
+shift_dist <- function(parent, a) {
+  # X = Y + a — shift right by a. Inner natural support [0, Inf) -> [a, Inf).
   out <- list(
-    name = inner$name,
-    params = c(inner$params, list(.shift = a)),
-    d = function(x, log = FALSE) inner$d(x - a, log = log),
+    name    = parent$name,
+    parent  = parent,
+    shift   = a,
+    support = c(a, Inf),
+    d = function(x, log = FALSE) parent$d(x - a, log = log),
     p = function(q, lower.tail = TRUE, log.p = FALSE)
-          inner$p(q - a, lower.tail = lower.tail, log.p = log.p),
+          parent$p(q - a, lower.tail = lower.tail, log.p = log.p),
     q = function(p, lower.tail = TRUE, log.p = FALSE)
-          inner$q(p, lower.tail = lower.tail, log.p = log.p) + a,
-    r = function(n) inner$r(n) + a
+          parent$q(p, lower.tail = lower.tail, log.p = log.p) + a,
+    r = function(n) parent$r(n) + a,
+    mean = function() parent$mean() + a,
+    var  = function() parent$var()
   )
+  out$std    <- function() sqrt(out$var())
+  out$median <- function() out$q(0.5)
   class(out) <- "distsfactory_dist"
   out
 }
 
-flip_dist <- function(inner, b) {
+flip_dist <- function(parent, b) {
+  # X = b - Y — reflect about b. Inner [0, Inf) -> X on (-Inf, b].
+  # f_X(x) = f_Y(b - x);  F_X(x) = 1 - F_Y(b - x).
   out <- list(
-    name = inner$name,
-    params = c(inner$params, list(.flip = b)),
-    # X = b - Y;  f_X(x) = f_Y(b - x);  F_X(x) = 1 - F_Y(b - x)
-    d = function(x, log = FALSE) inner$d(b - x, log = log),
+    name       = parent$name,
+    parent     = parent,
+    flip_point = b,
+    support    = c(-Inf, b),
+    d = function(x, log = FALSE) parent$d(b - x, log = log),
     p = function(q, lower.tail = TRUE, log.p = FALSE) {
-      p <- 1 - inner$p(b - q)
+      p <- 1 - parent$p(b - q)
       if (!lower.tail) p <- 1 - p
       if (log.p) log(p) else p
     },
     q = function(p, lower.tail = TRUE, log.p = FALSE) {
       if (log.p) p <- exp(p)
       if (!lower.tail) p <- 1 - p
-      b - inner$q(1 - p)
+      b - parent$q(1 - p)
     },
-    r = function(n) b - inner$r(n)
+    r = function(n) b - parent$r(n),
+    mean = function() b - parent$mean(),
+    var  = function() parent$var()
   )
+  out$std    <- function() sqrt(out$var())
+  out$median <- function() out$q(0.5)
   class(out) <- "distsfactory_dist"
   out
 }
 
-scale_dist <- function(inner, a, w) {
+scale_dist <- function(parent, a, w) {
+  # X = a + w*Y — affine scale onto [a, a + w] for inner on [0, 1].
+  # f_X(x) = f_Y((x-a)/w) / w;  F_X(x) = F_Y((x-a)/w).
   out <- list(
-    name = inner$name,
-    params = c(inner$params, list(.loc = a, .scale = w)),
-    # X = a + w*Y;  f_X(x) = f_Y((x-a)/w) / w;  F_X(x) = F_Y((x-a)/w)
+    name        = parent$name,
+    parent      = parent,
+    scale_loc   = a,
+    scale_width = w,
+    support     = c(a, a + w),
     d = function(x, log = FALSE) {
-      if (log) inner$d((x - a) / w, log = TRUE) - log(w)
-      else inner$d((x - a) / w) / w
+      if (log) parent$d((x - a) / w, log = TRUE) - log(w)
+      else parent$d((x - a) / w) / w
     },
     p = function(q, lower.tail = TRUE, log.p = FALSE)
-          inner$p((q - a) / w, lower.tail = lower.tail, log.p = log.p),
+          parent$p((q - a) / w, lower.tail = lower.tail, log.p = log.p),
     q = function(p, lower.tail = TRUE, log.p = FALSE)
-          a + w * inner$q(p, lower.tail = lower.tail, log.p = log.p),
-    r = function(n) a + w * inner$r(n)
+          a + w * parent$q(p, lower.tail = lower.tail, log.p = log.p),
+    r = function(n) a + w * parent$r(n),
+    mean = function() a + w * parent$mean(),
+    var  = function() w^2 * parent$var()
   )
+  out$std    <- function() sqrt(out$var())
+  out$median <- function() out$q(0.5)
   class(out) <- "distsfactory_dist"
   out
 }
@@ -348,7 +403,8 @@ solve_truncated_locscale <- function(name, target_mean, target_var, lo, hi) {
   sol <- newton_2d(obj, start, maxiter = 200, tol = 1e-9, h = 1e-5)
   loc <- sol[1]; sc <- exp(sol[2])
   inner_params <- fns$set(loc, sc)
-  make_truncated(name, inner_params, fns$d, fns$p, fns$q, fns$r, lo, hi)
+  parent <- new_dist(name, inner_params, fns$d, fns$p, fns$q, fns$r)
+  make_truncated(parent, lo, hi)
 }
 
 # Generic positive-family truncation: assume base R d/p/q/r for the family,
@@ -404,5 +460,6 @@ solve_truncated_positive <- function(name, target_mean, target_var, lo, hi) {
   m_un <- sol[1]; v_un <- exp(sol[2])
   inner_dist <- fns$from_mv(m_un, v_un)
   ip <- fns$params_of(inner_dist)
-  make_truncated(name, ip, fns$d, fns$p, fns$q, fns$r, lo, hi)
+  parent <- new_dist(name, ip, fns$d, fns$p, fns$q, fns$r)
+  make_truncated(parent, lo, hi)
 }

@@ -19,23 +19,47 @@ library(distsfactory)
 d <- make_dist("gamma", mean = 5, var = 3)
 class(d)         # "distsfactory_dist"
 
+# Use the distribution: d/p/q/r mirror base R's convention
 d$d(2)           # density
 d$p(0.95)        # CDF
 d$q(0.5)         # quantile
 d$r(100)         # random samples
-d$params         # list(shape = 8.33, rate = 1.67)
 
-# Truncated Normal on [-1, 4] with mean 1 and standard deviation 0.8
-d <- make_dist("normal", mean = 1.0, std = 0.8, support = c(-1, 4))
-d$name           # "truncated_normal"
-d$params         # $mean = 0.982, $sd = 0.823, $.lo = -1, $.hi = 4
-                 # — parent Normal(mu, sigma) solved so the *truncated*
-                 #   distribution hits the requested (mean, std)
-d$p(-1)          # 0
-d$p(4)           # 1
+# Summary statistics — same surface as Julia (mean(d), var(d), ...)
+# and Python (d.mean(), d.var(), ...)
+d$mean()         # 5
+d$var()          # 3
+d$std()          # 1.732
+d$median()       # 4.671
+mean(d); median(d); quantile(d, c(0.25, 0.75))   # S3 generics also dispatch
+
+# Inspect the canonical R parameters (what dgamma/pgamma see)
+d$params         # list(shape = 8.33, rate = 1.67)
 ```
 
-For real-line families (Normal / Laplace / Logistic) on a bounded interval, the constructor solves a 2-D Newton system on the parent `(mu, sigma)` so the truncated moments match, gating feasibility on the Langevin envelope. For positive-support families on a half-infinite interval the right transform is an affine shift; on a bounded interval it's a generic 2-D truncation solver. Beta on an arbitrary `[a, b]` is an affine scale. The dispatch happens inside `make_dist`.
+### Truncated Normal on `[-1, 4]` with mean 1 and standard deviation 0.8
+
+```r
+d <- make_dist("normal", mean = 1.0, std = 0.8, support = c(-1, 4))
+d$name           # "truncated_normal"
+
+# The distribution's own moments — what you asked for.
+d$mean()         # 1.0
+d$std()          # 0.8
+
+# The support and the parent are exposed as sibling slots. A wrapped
+# dist has no $params of its own (the parent's parameters are not the
+# wrapped distribution's moments, so flattening them would be confusing).
+d$support        # c(-1, 4)
+d$parent         # the un-truncated Normal (also a distsfactory_dist)
+d$parent$params  # list(mean = 0.9822, sd = 0.8232)
+                 # — parent Normal(mu, sigma) solved so the *truncated*
+                 #   moments hit the requested (mean = 1, std = 0.8)
+```
+
+The same `$parent` accessor works on every wrapped distribution — affine shift (Gamma on `[a, Inf)`), affine flip (Gamma on `(-Inf, b]`), affine scale (Beta on `[a, b]`), and truncation. Sibling slots describe the transform: `$shift`, `$flip_point`, `$scale_loc` + `$scale_width`, or `$support` for truncation.
+
+For real-line families (Normal / Laplace / Logistic) on a bounded interval, the constructor solves a 2-D Newton system on the parent `(mu, sigma)` so the truncated moments match, gating feasibility on the Langevin envelope. For positive-support families on a half-infinite interval the transform is an affine shift; on a bounded interval it's a generic 2-D truncation solver. Beta on an arbitrary `[a, b]` is an affine scale.
 
 ## Supported distributions
 
