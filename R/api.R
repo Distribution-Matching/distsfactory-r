@@ -125,6 +125,11 @@ make_dist <- function(dist, mean = NULL, var = NULL, std = NULL, cv = NULL,
                       scv = NULL, second_moment = NULL, median = NULL,
                       q1 = NULL, q3 = NULL, iqr = NULL, quantiles = NULL,
                       mode = NULL, support = NULL) {
+  if (inherits(dist, "partial_dist")) {
+    return(make_dist_from_partial(dist, mean = mean, var = var, std = std,
+                                  cv = cv, scv = scv,
+                                  second_moment = second_moment))
+  }
   name <- resolve_dist_name(dist)
   handler <- .dist_handlers[[name]]
   spec <- parse_spec(

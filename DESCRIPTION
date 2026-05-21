@@ -53,4 +53,6 @@ Collate:
     'discrete_triangular.R'
     'langevin.R'
     'support.R'
+    'moments.R'
+    'partial.R'
     'api.R'
