@@ -7,7 +7,12 @@
   logistic    = list(dispatch = logistic_dispatch,    exists_mv = logistic_exists_mean_var),
   beta        = list(dispatch = beta_dispatch,        exists_mv = beta_exists_mean_var),
   normal      = list(dispatch = normal_dispatch,      exists_mv = normal_exists_mean_var),
-  lognormal   = list(dispatch = lognormal_dispatch,   exists_mv = lognormal_exists_mean_var)
+  lognormal   = list(dispatch = lognormal_dispatch,   exists_mv = lognormal_exists_mean_var),
+  uniform     = list(dispatch = uniform_dispatch,     exists_mv = uniform_exists_mean_var),
+  weibull     = list(dispatch = weibull_dispatch,     exists_mv = weibull_exists_mean_var),
+  tdist       = list(dispatch = tdist_dispatch,       exists_mv = tdist_exists_mean_var),
+  chisq       = list(dispatch = chisq_dispatch,       exists_mv = chisq_exists_mean_var),
+  fdist       = list(dispatch = fdist_dispatch,       exists_mv = fdist_exists_mean_var)
 )
 
 # Aliases
@@ -18,7 +23,16 @@
   gauss     = "normal",
   gaussian  = "normal",
   lnorm     = "lognormal",
-  log_normal = "lognormal"
+  log_normal = "lognormal",
+  unif      = "uniform",
+  weib      = "weibull",
+  student   = "tdist",
+  t         = "tdist",
+  chi_sq    = "chisq",
+  chisquare = "chisq",
+  chi_squared = "chisq",
+  f         = "fdist",
+  fisher    = "fdist"
 )
 
 resolve_dist_name <- function(dist) {

@@ -27,7 +27,8 @@ oracle_path <- function() {
 # families are added to the R package, extend this vector — eventually it
 # should reach Julia/Python parity.
 SUPPORTED_FAMILIES <- c("gamma", "exponential", "logistic", "beta", "normal",
-                        "lognormal")
+                        "lognormal", "uniform", "weibull", "tdist", "chisq",
+                        "fdist")
 
 closed_form_mean <- function(name, params) {
   switch(
@@ -38,6 +39,11 @@ closed_form_mean <- function(name, params) {
     beta        = params$shape1 / (params$shape1 + params$shape2),
     normal      = params$mean,
     lognormal   = exp(params$meanlog + params$sdlog^2 / 2),
+    uniform     = (params$min + params$max) / 2,
+    weibull     = params$scale * gamma(1 + 1 / params$shape),
+    tdist       = 0,
+    chisq       = params$df,
+    fdist       = params$df2 / (params$df2 - 2),
     stop("no closed-form mean wired for ", name)
   )
 }
@@ -56,6 +62,17 @@ closed_form_var <- function(name, params) {
     lognormal   = {
       s2 <- params$sdlog^2
       (exp(s2) - 1) * exp(2 * params$meanlog + s2)
+    },
+    uniform     = (params$max - params$min)^2 / 12,
+    weibull     = {
+      g1 <- gamma(1 + 1 / params$shape); g2 <- gamma(1 + 2 / params$shape)
+      params$scale^2 * (g2 - g1^2)
+    },
+    tdist       = params$df / (params$df - 2),
+    chisq       = 2 * params$df,
+    fdist       = {
+      d1 <- params$df1; d2 <- params$df2
+      2 * d2^2 * (d1 + d2 - 2) / (d1 * (d2 - 2)^2 * (d2 - 4))
     },
     stop("no closed-form var wired for ", name)
   )
