@@ -44,6 +44,7 @@ Collate:
     'erlang.R'
     'sym_triangular.R'
     'triangular.R'
+    'cauchy.R'
     'binomial.R'
     'poisson.R'
     'negative_binomial.R'

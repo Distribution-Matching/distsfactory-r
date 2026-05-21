@@ -102,6 +102,7 @@ print.partial_dist <- function(x, ...) {
     discrete_uniform = list(d = ddunif_, p = pdunif_, q = qdunif_, r = rdunif_),
     discrete_sym_triangular = list(d = ddst_, p = pdst_, q = qdst_, r = rdst_),
     discrete_triangular = list(d = ddtri_, p = pdtri_, q = qdtri_, r = rdtri_),
+    cauchy      = list(d = dcauchy, p = pcauchy, q = qcauchy, r = rcauchy),
     triangular  = list(d = function(x, a, b, c, log = FALSE) dtriang_(x, a, b, c, log),
                        p = function(q, a, b, c, lower.tail = TRUE, log.p = FALSE)
                              ptriang_(q, a, b, c, lower.tail, log.p),

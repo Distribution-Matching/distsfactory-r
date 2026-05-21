@@ -147,6 +147,7 @@ dist_var_from_params <- function(name, params) {
   erlang      = c("shape", "scale"),
   sym_triangular = c("location", "scale"),
   triangular  = c("a", "b", "c"),
+  cauchy      = c("location", "scale"),
   binomial    = c("size", "prob"),
   poisson     = c("lambda"),
   negative_binomial = c("size", "prob"),

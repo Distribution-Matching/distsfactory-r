@@ -39,7 +39,7 @@ For real-line families (Normal / Laplace / Logistic) on a bounded interval, the 
 
 ## Supported distributions
 
-29 families across continuous (real, positive, unit) and discrete supports. Each family supports a subset of specification types — `mean+var` is universal; quantile- and mode-based forms are implemented where they exist in the Julia package.
+30 families across continuous (real, positive, unit) and discrete supports. Each family supports a subset of specification types — `mean+var` is universal; quantile- and mode-based forms are implemented where they exist in the Julia package.
 
 ### Continuous on `(-Inf, Inf)`
 
@@ -47,14 +47,13 @@ For real-line families (Normal / Laplace / Logistic) on a bounded interval, the 
 |---|---|---|
 | Normal | 2 | mean+var, q1+q3, mode+var |
 | Student's T | 1 | mean+var (mu=0); arbitrary location-scale via `partial_dist("tdist", df=...)` (with support) |
+| Cauchy | 2 | two quantiles, median+iqr (moments undefined) |
 | Laplace | 2 | mean+var, two quantiles, mode+var |
 | Logistic | 2 | mean+var, two quantiles, mode+iqr, mean+quantile |
 | Gumbel | 2 | mean+var, two quantiles, mean+quantile, mean+mode, mode+var |
 | Uniform | 2 | mean+var, two quantiles, mean+quantile |
 | Symmetric Triangular | 2 | mean+var, mode+var |
 | Triangular (asymmetric) | 3 | mean+var+mode |
-
-(Cauchy is not yet implemented — see [#1](https://github.com/Distribution-Matching/distsfactory-r/issues/1).)
 
 ### Continuous on `[0, Inf)`
 

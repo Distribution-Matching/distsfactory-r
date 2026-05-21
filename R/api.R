@@ -24,6 +24,7 @@
   erlang      = list(dispatch = erlang_dispatch,      exists_mv = erlang_exists_mean_var),
   sym_triangular = list(dispatch = symtri_dispatch,   exists_mv = symtri_exists_mean_var),
   triangular  = list(dispatch = triang_dispatch,      exists_mv = triang_exists_mean_var),
+  cauchy      = list(dispatch = cauchy_dispatch,      exists_mv = cauchy_exists_mean_var),
   binomial    = list(dispatch = binomial_dispatch,    exists_mv = binomial_exists_mean_var),
   poisson     = list(dispatch = poisson_dispatch,     exists_mv = poisson_exists_mean_var),
   negative_binomial = list(dispatch = nbinom_dispatch, exists_mv = nbinom_exists_mean_var),

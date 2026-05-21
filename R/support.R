@@ -22,6 +22,7 @@
   uniform           = "real",
   sym_triangular    = "real",
   triangular        = "real",
+  cauchy            = "real",
   gamma             = "positive",
   erlang            = "positive",
   exponential       = "positive",

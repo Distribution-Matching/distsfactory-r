@@ -18,10 +18,11 @@
 #' @keywords internal
 #' @name distsfactory-package
 #' @aliases distsfactory
-#' @importFrom stats dbeta dbinom dchisq dexp df dgamma dgeom dlnorm dlogis
-#'   dnbinom dnorm dpois dt dunif dweibull integrate pbeta pbinom pchisq pexp
-#'   pf pgamma pgeom plnorm plogis pnbinom pnorm ppois pt punif pweibull qbeta
-#'   qbinom qchisq qexp qf qgamma qgeom qlnorm qlogis qnbinom qnorm qpois qt
-#'   qunif qweibull rbeta rbinom rchisq rexp rf rgamma rgeom rlnorm rlogis
-#'   rnbinom rnorm rpois rt runif rweibull uniroot
+#' @importFrom stats dbeta dbinom dcauchy dchisq dexp df dgamma dgeom dlnorm
+#'   dlogis dnbinom dnorm dpois dt dunif dweibull integrate pbeta pbinom
+#'   pcauchy pchisq pexp pf pgamma pgeom plnorm plogis pnbinom pnorm ppois pt
+#'   punif pweibull qbeta qbinom qcauchy qchisq qexp qf qgamma qgeom qlnorm
+#'   qlogis qnbinom qnorm qpois qt qunif qweibull rbeta rbinom rcauchy rchisq
+#'   rexp rf rgamma rgeom rlnorm rlogis rnbinom rnorm rpois rt runif rweibull
+#'   uniroot
 "_PACKAGE"

@@ -33,7 +33,7 @@ SUPPORTED_FAMILIES <- c("gamma", "exponential", "logistic", "beta", "normal",
                         "erlang", "sym_triangular", "triangular",
                         "binomial", "poisson", "negative_binomial", "geometric",
                         "discrete_uniform", "discrete_sym_triangular",
-                        "discrete_triangular")
+                        "discrete_triangular", "cauchy")
 
 closed_form_mean <- function(name, params) {
   switch(
