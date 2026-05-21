@@ -43,7 +43,7 @@ dist_mean_from_params <- function(name, params) {
                               (b - ks + 1) / (b - c + 1) / Z)
       sum(ks * pmf)
     },
-    stop("no closed-form mean wired for ", name)
+    stop(sprintf("no closed-form mean wired for %s", name))
   )
 }
 
@@ -118,7 +118,7 @@ dist_var_from_params <- function(name, params) {
       m <- sum(ks * pmf)
       sum((ks - m)^2 * pmf)
     },
-    stop("no closed-form var wired for ", name)
+    stop(sprintf("no closed-form var wired for %s", name))
   )
 }
 

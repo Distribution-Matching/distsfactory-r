@@ -109,7 +109,7 @@ print.partial_dist <- function(x, ...) {
                        q = function(p, a, b, c, lower.tail = TRUE, log.p = FALSE)
                              qtriang_(p, a, b, c, lower.tail, log.p),
                        r = function(n, a, b, c) rtriang_(n, a, b, c)),
-    stop("Family ", name, " not supported by partial_dist")
+    stop(sprintf("Family %s not supported by partial_dist", name))
   )
 }
 
