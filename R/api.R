@@ -18,7 +18,12 @@
   rayleigh    = list(dispatch = rayleigh_dispatch,    exists_mv = rayleigh_exists_mean_var),
   pareto      = list(dispatch = pareto_dispatch,      exists_mv = pareto_exists_mean_var),
   frechet     = list(dispatch = frechet_dispatch,     exists_mv = frechet_exists_mean_var),
-  inverse_gamma = list(dispatch = invgamma_dispatch,  exists_mv = invgamma_exists_mean_var)
+  inverse_gamma = list(dispatch = invgamma_dispatch,  exists_mv = invgamma_exists_mean_var),
+  chi         = list(dispatch = chi_dispatch,         exists_mv = chi_exists_mean_var),
+  folded_normal = list(dispatch = foldednorm_dispatch, exists_mv = foldednorm_exists_mean_var),
+  erlang      = list(dispatch = erlang_dispatch,      exists_mv = erlang_exists_mean_var),
+  sym_triangular = list(dispatch = symtri_dispatch,   exists_mv = symtri_exists_mean_var),
+  triangular  = list(dispatch = triang_dispatch,      exists_mv = triang_exists_mean_var)
 )
 
 # Aliases
@@ -40,7 +45,10 @@
   f         = "fdist",
   fisher    = "fdist",
   invgamma  = "inverse_gamma",
-  "inverse-gamma" = "inverse_gamma"
+  "inverse-gamma" = "inverse_gamma",
+  foldednormal = "folded_normal",
+  symtriangular = "sym_triangular",
+  triang = "triangular"
 )
 
 resolve_dist_name <- function(dist) {

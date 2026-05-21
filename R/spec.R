@@ -32,6 +32,9 @@ parse_spec <- function(mean = NULL, var = NULL, std = NULL, cv = NULL,
 
   # Mode-based specs
   if (!is.null(mode)) {
+    if (!is.null(mean) && !is.null(var))
+      return(structure(list(mean = mean, var = var, mode = mode),
+                       class = "MeanVarModeSpec"))
     if (!is.null(mean) && is.null(var))
       return(structure(list(mean = mean, mode = mode), class = "MeanModeSpec"))
     if (!is.null(var))

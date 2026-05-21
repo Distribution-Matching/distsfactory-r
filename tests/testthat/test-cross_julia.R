@@ -29,7 +29,8 @@ oracle_path <- function() {
 SUPPORTED_FAMILIES <- c("gamma", "exponential", "logistic", "beta", "normal",
                         "lognormal", "uniform", "weibull", "tdist", "chisq",
                         "fdist", "laplace", "gumbel", "rayleigh", "pareto",
-                        "frechet", "inverse_gamma")
+                        "frechet", "inverse_gamma", "chi", "folded_normal",
+                        "erlang", "sym_triangular", "triangular")
 
 closed_form_mean <- function(name, params) {
   switch(
@@ -51,6 +52,15 @@ closed_form_mean <- function(name, params) {
     pareto      = params$shape * params$scale / (params$shape - 1),
     frechet     = params$scale * gamma(1 - 1 / params$shape),
     inverse_gamma = params$scale / (params$shape - 1),
+    chi           = sqrt(2) * exp(lgamma((params$df + 1) / 2) - lgamma(params$df / 2)),
+    folded_normal = {
+      mu <- params$location; sigma <- params$scale
+      sigma * sqrt(2 / pi) * exp(-mu^2 / (2 * sigma^2)) +
+        mu * (1 - 2 * pnorm(-mu / sigma))
+    },
+    erlang        = params$shape * params$scale,
+    sym_triangular = params$location,
+    triangular    = (params$a + params$b + params$c) / 3,
     stop("no closed-form mean wired for ", name)
   )
 }
@@ -96,6 +106,22 @@ closed_form_var <- function(name, params) {
     inverse_gamma = {
       a <- params$shape; b <- params$scale
       b^2 / ((a - 1)^2 * (a - 2))
+    },
+    chi           = {
+      m <- sqrt(2) * exp(lgamma((params$df + 1) / 2) - lgamma(params$df / 2))
+      params$df - m^2
+    },
+    folded_normal = {
+      mu <- params$location; sigma <- params$scale
+      m <- sigma * sqrt(2 / pi) * exp(-mu^2 / (2 * sigma^2)) +
+           mu * (1 - 2 * pnorm(-mu / sigma))
+      mu^2 + sigma^2 - m^2
+    },
+    erlang        = params$shape * params$scale^2,
+    sym_triangular = params$scale^2 / 6,
+    triangular    = {
+      a <- params$a; b <- params$b; c <- params$c
+      (a^2 + b^2 + c^2 - a * b - a * c - b * c) / 18
     },
     stop("no closed-form var wired for ", name)
   )
