@@ -60,7 +60,7 @@ print.partial_dist <- function(x, ...) {
 .partial_build <- function(name, fixed, free_names, free_values) {
   params <- fixed
   for (i in seq_along(free_names)) {
-    params[[free_names[i]]] <- free_values[i]
+    params[[free_names[i]]] <- unname(free_values[i])
   }
   # Build the dist by invoking the family's normal mean-var constructor at
   # moments implied by the params is not always available; instead, rebuild
@@ -105,10 +105,28 @@ print.partial_dist <- function(x, ...) {
   )
 }
 
-# Tunable: starting guesses for the solver.
-.partial_initial <- function(name, free_names) {
-  # Use 1.0 for everything except clearly positive shape/scale-like params;
-  # let the brentq bracket expansion handle the rest.
+# Tunable: starting guesses for the 2-D Newton solver. When the user pins
+# nothing (i.e. all canonical params are free), use the family's standard
+# `from_mean_var` constructor to produce a starting point in canonical-param
+# space; this gives Newton a non-degenerate Jacobian immediately. When some
+# params are pinned, fall back to ones — Newton will move to the right region.
+.partial_initial <- function(name, free_names, fixed, mean, var) {
+  canon <- canonical_params(name)
+  # Only use the from_mean_var bootstrap when ALL canonical params are free
+  # and (mean, var) targets are present.
+  if (length(fixed) == 0 && !is.null(mean) && !is.null(var) &&
+      identical(sort(free_names), sort(canon))) {
+    seed <- tryCatch({
+      handler <- .dist_handlers[[name]]
+      seed_dist <- handler$dispatch(
+        structure(list(mean = mean, var = var), class = "MeanVarSpec"))
+      vapply(free_names, function(n) {
+        v <- seed_dist$params[[n]]
+        if (is.null(v) || !is.numeric(v)) NA_real_ else as.numeric(v)
+      }, numeric(1))
+    }, error = function(e) NULL)
+    if (!is.null(seed) && all(is.finite(seed))) return(seed)
+  }
   rep(1, length(free_names))
 }
 
@@ -174,7 +192,7 @@ make_dist_from_partial <- function(spec, mean = NULL, var = NULL, std = NULL,
       mv <- moments_of(values)
       c(mv[1] - mean, mv[2] - var)
     }
-    sol <- newton_2d(obj, .partial_initial(name, free_names),
+    sol <- newton_2d(obj, .partial_initial(name, free_names, fixed, mean, var),
                      maxiter = 200, tol = 1e-9, h = 1e-6)
     return(.partial_build(name, fixed, free_names, sol))
   }
@@ -184,7 +202,18 @@ make_dist_from_partial <- function(spec, mean = NULL, var = NULL, std = NULL,
 }
 
 .bracketed_brentq <- function(f, x0 = 1) {
-  candidates <- list(c(1e-6, 1e3), c(1e-9, 1e6), c(-1e6, 1e6))
+  # Try narrower brackets first to avoid catastrophic overflow on families
+  # whose moments grow super-exponentially with the parameter (e.g. lognormal
+  # sdlog), and include brackets that exclude divergent regions (e.g. TDist
+  # variance is finite only for df > 2).
+  candidates <- list(
+    c(1e-3, 10),       # narrow positive — typical scale-like params
+    c(0.1, 100),
+    c(2.001, 1e3),     # tdist df > 2 (finite variance only there)
+    c(1e-6, 1e3),      # original wide positive
+    c(1e-9, 1e6),
+    c(-1e6, 1e6)       # last resort — signed params
+  )
   for (br in candidates) {
     fa <- tryCatch(f(br[1]), error = function(e) NA_real_)
     fb <- tryCatch(f(br[2]), error = function(e) NA_real_)
