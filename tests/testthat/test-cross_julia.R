@@ -242,20 +242,24 @@ test_that("cross-oracle constructors agree with Julia", {
 
 test_that("cross-oracle dist_exists agrees with Julia", {
   oracle <- load_oracle()
-  # R does not yet support the `support=` (truncation) kwarg, so skip any
-  # feasibility cases that depend on it.
-  cases <- Filter(
-    function(c) c$py_name %in% SUPPORTED_FAMILIES && is.null(c$support),
-    oracle$feasibility
-  )
+  cases <- Filter(function(c) c$py_name %in% SUPPORTED_FAMILIES, oracle$feasibility)
   testthat::expect_gt(length(cases), 0)
 
   for (case in cases) {
     name <- case$py_name
     kw <- coerce_kwargs(case$kwargs)
     expected <- isTRUE(case$expected)
+    sup <- case$support
+    if (!is.null(sup)) {
+      lo <- parse_value(sup[[1]]); hi <- parse_value(sup[[2]])
+      kw$support <- c(lo, hi)
+    }
     label <- sprintf("%s(%s)", name,
-                     paste(names(kw), "=", sapply(kw, format),
+                     paste(names(kw), "=",
+                           sapply(kw, function(v) {
+                             if (length(v) == 2) sprintf("c(%g,%g)", v[1], v[2])
+                             else format(v)
+                           }),
                            collapse = ", "))
 
     actual <- do.call(dist_exists, c(list(dist = name), kw))

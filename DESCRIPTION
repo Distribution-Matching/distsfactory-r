@@ -51,4 +51,6 @@ Collate:
     'discrete_uniform.R'
     'discrete_sym_triangular.R'
     'discrete_triangular.R'
+    'langevin.R'
+    'support.R'
     'api.R'

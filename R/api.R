@@ -124,7 +124,7 @@ resolve_dist_name <- function(dist) {
 make_dist <- function(dist, mean = NULL, var = NULL, std = NULL, cv = NULL,
                       scv = NULL, second_moment = NULL, median = NULL,
                       q1 = NULL, q3 = NULL, iqr = NULL, quantiles = NULL,
-                      mode = NULL) {
+                      mode = NULL, support = NULL) {
   name <- resolve_dist_name(dist)
   handler <- .dist_handlers[[name]]
   spec <- parse_spec(
@@ -132,7 +132,10 @@ make_dist <- function(dist, mean = NULL, var = NULL, std = NULL, cv = NULL,
     second_moment = second_moment, median = median, q1 = q1, q3 = q3,
     iqr = iqr, quantiles = quantiles, mode = mode
   )
-  handler$dispatch(spec)
+  if (is.null(support)) {
+    return(handler$dispatch(spec))
+  }
+  dist_on_support(name, spec, support)
 }
 
 
@@ -150,7 +153,7 @@ make_dist <- function(dist, mean = NULL, var = NULL, std = NULL, cv = NULL,
 dist_exists <- function(dist, mean = NULL, var = NULL, std = NULL, cv = NULL,
                         scv = NULL, second_moment = NULL, median = NULL,
                         q1 = NULL, q3 = NULL, iqr = NULL, quantiles = NULL,
-                        mode = NULL) {
+                        mode = NULL, support = NULL) {
   name <- resolve_dist_name(dist)
   handler <- .dist_handlers[[name]]
   spec <- parse_spec(
@@ -158,6 +161,10 @@ dist_exists <- function(dist, mean = NULL, var = NULL, std = NULL, cv = NULL,
     second_moment = second_moment, median = median, q1 = q1, q3 = q3,
     iqr = iqr, quantiles = quantiles, mode = mode
   )
+
+  if (!is.null(support) && inherits(spec, "MeanVarSpec")) {
+    return(dist_exists_on_support(name, spec$mean, spec$var, support))
+  }
 
   if (inherits(spec, "MeanVarSpec")) {
     return(handler$exists_mv(spec$mean, spec$var))
@@ -167,7 +174,8 @@ dist_exists <- function(dist, mean = NULL, var = NULL, std = NULL, cv = NULL,
   tryCatch({
     make_dist(dist, mean = mean, var = var, std = std, cv = cv, scv = scv,
               second_moment = second_moment, median = median, q1 = q1,
-              q3 = q3, iqr = iqr, quantiles = quantiles, mode = mode)
+              q3 = q3, iqr = iqr, quantiles = quantiles, mode = mode,
+              support = support)
     TRUE
   }, error = function(e) FALSE)
 }
@@ -187,12 +195,25 @@ available_distributions <- function(mean = NULL, var = NULL, std = NULL,
                                     cv = NULL, scv = NULL,
                                     second_moment = NULL, median = NULL,
                                     q1 = NULL, q3 = NULL, iqr = NULL,
-                                    quantiles = NULL, mode = NULL) {
+                                    quantiles = NULL, mode = NULL,
+                                    support = NULL) {
   spec <- parse_spec(
     mean = mean, var = var, std = std, cv = cv, scv = scv,
     second_moment = second_moment, median = median, q1 = q1, q3 = q3,
     iqr = iqr, quantiles = quantiles, mode = mode
   )
+
+  if (!is.null(support) && inherits(spec, "MeanVarSpec")) {
+    feasible <- character(0)
+    for (name in names(.dist_handlers)) {
+      ok <- tryCatch(
+        dist_exists_on_support(name, spec$mean, spec$var, support),
+        error = function(e) FALSE
+      )
+      if (isTRUE(ok)) feasible <- c(feasible, name)
+    }
+    return(feasible)
+  }
 
   if (inherits(spec, "MeanVarSpec")) {
     feasible <- character(0)
