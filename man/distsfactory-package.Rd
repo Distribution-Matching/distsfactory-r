@@ -20,8 +20,16 @@ package} is the parameterization master; this R package and the sibling
 Python package (\code{distsfactory}) cross-check their numerical output
 against a shared oracle.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/Distribution-Matching/distsfactory-r}
+  \item Report bugs at \url{https://github.com/Distribution-Matching/distsfactory-r/issues}
+}
+
+}
 \author{
-\strong{Maintainer}: Yoni Nazarathy \email{yoni@accumulationpoint.com}
+\strong{Maintainer}: Yoni Nazarathy \email{y.nazarathy@uq.edu.au}
 
 Authors:
 \itemize{

@@ -20,6 +20,13 @@
 \item{probs}{Numeric vector of probabilities in \code{[0, 1]} (for
 \code{quantile}).}
 }
+\value{
+\code{mean()} and \code{median()} each return a single numeric value of
+length one (the mean and median of the distribution, respectively).
+\code{quantile()} returns a named numeric vector of quantiles, one element
+per probability in \code{probs}, with names giving the corresponding
+percentages.
+}
 \description{
 S3 methods so that \code{mean(d)}, \code{median(d)}, and
 \code{quantile(d, probs)} work on a \code{distsfactory_dist} just like
