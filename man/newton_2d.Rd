@@ -4,10 +4,10 @@
 \alias{newton_2d}
 \title{Damped Newton iteration for a 2D system F(x) = 0}
 \usage{
-newton_2d(F, x0, maxiter = 200, tol = 1e-10, h = 1e-07)
+newton_2d(func, x0, maxiter = 200, tol = 1e-10, h = 1e-07)
 }
 \arguments{
-\item{F}{Function taking length-2 vector, returning length-2 vector.}
+\item{func}{Function taking length-2 vector, returning length-2 vector.}
 
 \item{x0}{Initial guess (length-2 vector).}
 

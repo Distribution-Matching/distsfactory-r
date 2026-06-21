@@ -29,17 +29,17 @@ find_root_1d <- function(f, x0 = 0, bracket = NULL) {
 
 
 #' Damped Newton iteration for a 2D system F(x) = 0
-#' @param F Function taking length-2 vector, returning length-2 vector.
+#' @param func Function taking length-2 vector, returning length-2 vector.
 #' @param x0 Initial guess (length-2 vector).
 #' @param maxiter Maximum iterations.
 #' @param tol Convergence tolerance.
 #' @param h Finite-difference step size.
 #' @return Solution vector (length 2).
 #' @keywords internal
-newton_2d <- function(F, x0, maxiter = 200, tol = 1e-10, h = 1e-7) {
+newton_2d <- function(func, x0, maxiter = 200, tol = 1e-10, h = 1e-7) {
   x <- x0
   for (iter in seq_len(maxiter)) {
-    Fx <- F(x)
+    Fx <- func(x)
     if (max(abs(Fx)) < tol) return(x)
 
     # Numerical Jacobian
@@ -47,7 +47,7 @@ newton_2d <- function(F, x0, maxiter = 200, tol = 1e-10, h = 1e-7) {
     for (j in 1:2) {
       xp <- x
       xp[j] <- xp[j] + h
-      J[, j] <- (F(xp) - Fx) / h
+      J[, j] <- (func(xp) - Fx) / h
     }
 
     dx <- tryCatch(solve(J, Fx), error = function(e) {
@@ -58,7 +58,7 @@ newton_2d <- function(F, x0, maxiter = 200, tol = 1e-10, h = 1e-7) {
     step <- 1.0
     for (k in seq_len(20)) {
       x_new <- x - step * dx
-      Fx_new <- F(x_new)
+      Fx_new <- func(x_new)
       if (max(abs(Fx_new)) < max(abs(Fx))) break
       step <- step * 0.5
     }
@@ -66,6 +66,6 @@ newton_2d <- function(F, x0, maxiter = 200, tol = 1e-10, h = 1e-7) {
   }
   stop(sprintf(
     "Newton iteration did not converge after %d iterations (residual: %g)",
-    maxiter, max(abs(F(x)))
+    maxiter, max(abs(func(x)))
   ))
 }

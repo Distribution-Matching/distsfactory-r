@@ -8,7 +8,7 @@ Authors@R: c(
     )
 Description: Construct probability distributions from partial specifications
     such as moments (mean, variance), quantiles, or mode. Wraps base R
-    distribution functions ('dnorm', 'pgamma', 'qbeta', etc.) and returns
+    distribution functions (dnorm(), pgamma(), qbeta(), etc.) and returns
     convenient distribution objects with d/p/q/r methods.
 License: MIT + file LICENSE
 URL: https://github.com/Distribution-Matching/distsfactory-r

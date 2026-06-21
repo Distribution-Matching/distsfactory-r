@@ -46,6 +46,13 @@ new_dist <- function(name, params, dfun, pfun, qfun, rfun) {
 #'   \code{quantile}).
 #' @param ... Unused.
 #'
+#' @return
+#' \code{mean()} and \code{median()} each return a single numeric value of
+#' length one (the mean and median of the distribution, respectively).
+#' \code{quantile()} returns a named numeric vector of quantiles, one element
+#' per probability in \code{probs}, with names giving the corresponding
+#' percentages.
+#'
 #' @export
 mean.distsfactory_dist <- function(x, ...) x$mean()
 
@@ -61,6 +68,15 @@ quantile.distsfactory_dist <- function(x, probs = seq(0, 1, 0.25), ...) {
   out
 }
 
+#' Print a distsfactory distribution
+#'
+#' @param x A \code{distsfactory_dist} object.
+#' @param ... Unused.
+#'
+#' @return Invisibly returns the \code{distsfactory_dist} object \code{x}.
+#'   Called for its side effect of printing a description of the distribution
+#'   to the console.
+#'
 #' @export
 print.distsfactory_dist <- function(x, ...) {
   fmt <- function(v) {
